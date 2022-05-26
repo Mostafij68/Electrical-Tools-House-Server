@@ -18,6 +18,7 @@ async function run(){
         await client.connect();
         const productsCollection = client.db('ElectricalTools').collection('products');
         const orderCollection = client.db('ElectricalTools').collection('order');
+        const reviewCollection = client.db('ElectricalTools').collection('review');
 
         // products api
         app.get('/products', async (req, res)=>{
@@ -47,6 +48,20 @@ async function run(){
             const cursor = orderCollection.find(query);
             const order = await cursor.toArray();
             res.send(order);
+        });
+
+        // Review api
+        app.post('/review', async (req, res)=>{
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
+
+        app.get('/review', async (req, res)=>{
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const review = await cursor.toArray();
+            res.send(review)
         });
 
     }
