@@ -21,12 +21,43 @@ async function run() {
         const orderCollection = client.db('ElectricalTools').collection('order');
         const reviewCollection = client.db('ElectricalTools').collection('review');
         const paymentCollection = client.db('ElectricalTools').collection('payments');
+        const userCollection = client.db('ElectricalTools').collection('user');
+
+        // User info 
+        app.put('/user/:email', async (req, res)=>{
+            const email = req.params.email;
+            const filter = {email: email};
+            const user = req.body;
+            const options = {upsert: true};
+            const updateDoc = {
+                $set: {
+                    displayName: user.displayName,
+                    email: user.email,
+                    admin: user.admin,
+                    education: user.education,
+                    address: user.address,
+                    location: user.location,
+                    phone: user.phone,
+                    linkedIn: user.linkedIn
+                }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        });
+
+        app.get('/user', async (req, res)=>{
+            const email = req.query.email;
+            const query = { email: email };
+            const cursor = userCollection.find(query);
+            const userInfo = await cursor.toArray();
+            res.send(userInfo);
+        });
+
 
         // card payment
         app.post('/create-payment-intent', async (req, res) => {
             const {totalPrice} = req.body;
             const amount = totalPrice * 100;
-            console.log(amount)
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: 'usd',
@@ -35,6 +66,7 @@ async function run() {
             
             res.send({ clientSecret: paymentIntent.client_secret });
         });
+
 
         // products api
         app.get('/products', async (req, res) => {
@@ -51,6 +83,7 @@ async function run() {
             res.send(product);
         });
 
+
         // Order api
         app.post('/order', async (req, res) => {
             const order = req.body;
@@ -65,6 +98,7 @@ async function run() {
             const order = await cursor.toArray();
             res.send(order);
         });
+
 
         // payment api
         app.patch('/order/:id', async(req, res) =>{
@@ -96,6 +130,7 @@ async function run() {
             const result = await orderCollection.deleteOne(query);
             res.send(result)
         });
+
 
         // Review api
         app.post('/review', async (req, res) => {
