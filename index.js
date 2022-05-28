@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { all } = require('express/lib/application');
 const port = process.env.PORT || 5000;
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -24,6 +25,21 @@ async function run() {
         const userCollection = client.db('ElectricalTools').collection('user');
 
         // User info 
+        app.get('/user', async (req, res)=>{
+            const query = {};
+            const cursor = userCollection.find(query);
+            const allUser = await cursor.toArray();
+            res.send(allUser)
+        });
+
+        app.get('/user', async(req, res)=>{
+            const email = req.query.email;
+            const query = { email: email };
+            const cursor = userCollection.find(query);
+            const userInfo = await cursor.toArray();
+            res.send(userInfo);
+        });
+
         app.put('/user/:email', async (req, res)=>{
             const email = req.params.email;
             const filter = {email: email};
@@ -45,12 +61,18 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/user', async (req, res)=>{
-            const email = req.query.email;
-            const query = { email: email };
-            const cursor = userCollection.find(query);
-            const userInfo = await cursor.toArray();
-            res.send(userInfo);
+        app.patch('/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const admin = req.body;
+            const filter = {_id: ObjectId(id)};
+            const options = {upsert: true};
+            const updateDoc = {
+                $set: {
+                    admin: admin.admin
+                }
+            };
+            const update = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(update);
         });
 
 
@@ -89,6 +111,13 @@ async function run() {
             const order = req.body;
             const result = await orderCollection.insertOne(order);
             res.send(result);
+        });
+
+        app.get('/order', async (req, res) => {
+            const query = {};
+            const cursor = orderCollection.find(query);
+            const order = await cursor.toArray();
+            res.send(order);
         });
 
         app.get('/order', async (req, res) => {
