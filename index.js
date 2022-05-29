@@ -25,26 +25,26 @@ async function run() {
         const userCollection = client.db('ElectricalTools').collection('user');
 
         // User info 
-        app.get('/user', async (req, res)=>{
+        app.get('/user', async (req, res) => {
             const query = {};
             const cursor = userCollection.find(query);
             const allUser = await cursor.toArray();
             res.send(allUser)
         });
 
-        app.get('/user', async(req, res)=>{
-            const email = req.query.email;
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
             const query = { email: email };
             const cursor = userCollection.find(query);
             const userInfo = await cursor.toArray();
             res.send(userInfo);
         });
 
-        app.put('/user/:email', async (req, res)=>{
+        app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
-            const filter = {email: email};
+            const filter = { email: email };
             const user = req.body;
-            const options = {upsert: true};
+            const options = { upsert: true };
             const updateDoc = {
                 $set: {
                     displayName: user.displayName,
@@ -64,8 +64,8 @@ async function run() {
         app.patch('/user/:id', async (req, res) => {
             const id = req.params.id;
             const admin = req.body;
-            const filter = {_id: ObjectId(id)};
-            const options = {upsert: true};
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
             const updateDoc = {
                 $set: {
                     admin: admin.admin
@@ -78,14 +78,14 @@ async function run() {
 
         // card payment
         app.post('/create-payment-intent', async (req, res) => {
-            const {totalPrice} = req.body;
+            const { totalPrice } = req.body;
             const amount = totalPrice * 100;
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: 'usd',
                 payment_method_types: ['card']
             });
-            
+
             res.send({ clientSecret: paymentIntent.client_secret });
         });
 
@@ -130,21 +130,21 @@ async function run() {
 
 
         // payment api
-        app.patch('/order/:id', async(req, res) =>{
-            const id  = req.params.id;
+        app.patch('/order/:id', async (req, res) => {
+            const id = req.params.id;
             const payment = req.body;
-            const filter = {_id: ObjectId(id)};
+            const filter = { _id: ObjectId(id) };
             const updatedDoc = {
-              $set: {
-                paid: true,
-                transactionId: payment.transactionId
-              }
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
             }
-      
+
             const result = await paymentCollection.insertOne(payment);
             const updatedOrder = await orderCollection.updateOne(filter, updatedDoc);
             res.send(updatedOrder);
-          })
+        })
 
         app.get('/order/:id', async (req, res) => {
             const id = req.params.id;
@@ -153,9 +153,9 @@ async function run() {
             res.send(order);
         });
 
-        app.delete('/order/:id', async (req, res) =>{
+        app.delete('/order/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
             res.send(result)
         });
